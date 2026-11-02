@@ -6,11 +6,6 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.matrix.MatrixAggregatable;
-import hudson.matrix.MatrixAggregator;
-import hudson.matrix.MatrixBuild;
-import hudson.matrix.MatrixProject;
-import hudson.model.BuildListener;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -33,7 +28,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  *
  * @author dvrzalik
  */
-public class WsCleanup extends Notifier implements MatrixAggregatable, SimpleBuildStep {
+public class WsCleanup extends Notifier implements SimpleBuildStep {
 
     public static final String LOG_PREFIX = "[WS-CLEANUP] ";
 
@@ -250,26 +245,6 @@ public class WsCleanup extends Notifier implements MatrixAggregatable, SimpleBui
     }
 
     @Override
-    public MatrixAggregator createAggregator(MatrixBuild build, Launcher launcher, BuildListener listener) {
-        if (cleanupMatrixParent) {
-            return new WsCleanupMatrixAggregator(
-                    build,
-                    launcher,
-                    listener,
-                    patterns,
-                    deleteDirs,
-                    cleanWhenSuccess,
-                    cleanWhenUnstable,
-                    cleanWhenFailure,
-                    cleanWhenNotBuilt,
-                    cleanWhenAborted,
-                    notFailBuild,
-                    this.externalDelete);
-        }
-        return null;
-    }
-
-    @Override
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
@@ -280,7 +255,8 @@ public class WsCleanup extends Notifier implements MatrixAggregatable, SimpleBui
     }
 
     public boolean isMatrixProject(Object o) {
-        return o instanceof MatrixProject;
+        // Compare by name so this class does not need matrix-project, which is an optional dependency.
+        return o != null && o.getClass().getName().equals("hudson.matrix.MatrixProject");
     }
 
     @Symbol("cleanWs")
